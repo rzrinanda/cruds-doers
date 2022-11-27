@@ -1,0 +1,15 @@
+.title-heading{
+    font-size: 30px;
+    font-weight: 800;
+    margin-bottom: 14px;
+}
+.underline{
+    height: 4px;
+    width: 88px;
+    border-radius: 8px;
+    background-color: cadetblue;
+    margin-bottom: 16px;
+}
+.main-color{
+    background-color: #0014ad;
+}

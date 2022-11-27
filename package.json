@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "nuxt",
+    "dev": "nodemon -w api server.js",
     "build": "nuxt build",
     "start": "nuxt start",
     "generate": "nuxt generate",
@@ -13,6 +13,7 @@
     "lintfix": "prettier --write --list-different . && yarn lint:js --fix"
   },
   "dependencies": {
+    "@hapi/hapi": "^21.0.0",
     "@nuxtjs/axios": "^5.13.6",
     "@nuxtjs/hapi": "^3.0.0",
     "bootstrap": "^4.6.2",
@@ -25,12 +26,14 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.19.1",
+    "@nuxtjs/dotenv": "^1.4.1",
     "@nuxtjs/eslint-config": "^11.0.0",
     "@nuxtjs/eslint-module": "^3.1.0",
     "eslint": "^8.24.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-nuxt": "^4.0.0",
     "eslint-plugin-vue": "^9.5.1",
+    "nodemon": "^2.0.20",
     "prettier": "^2.7.1"
   }
 }

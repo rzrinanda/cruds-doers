@@ -1,15 +1,110 @@
 <template>
   <div>
-    <b-button size="sm" @click="toggle">
+    <!-- <b-button size="sm" @click="toggle">
       {{ show ? 'Hide' : 'Show' }} Alert
     </b-button>
     <b-alert v-model="show" class="mt-3" dismissible @dismissed="dismissed">
       Hello {{ name }}!
-    </b-alert>
-    <b-navbar toggleable="lg" type="dark" variant="info">
-      <b-navbar-brand href="#">DoersBar</b-navbar-brand>
+    </b-alert> -->
+    <b-navbar
+      toggleable="lg"
+      type="dark"
+      variant="primary"
+      class="shadow mb-3 mx-auto"
+    >
+      <b-navbar-brand href="#">Doers Management</b-navbar-brand>
     </b-navbar>
+    <AlertNotification v-if="show" :notif="notif" />
     <b-container fluid>
+      <div class="title-heading">Create Data</div>
+      <div class="underline"></div>
+      <div>
+        <b-form
+          v-if="showCreate"
+          class="mb-5"
+          @submit="onSubmit"
+          @reset="onReset"
+        >
+          <b-row>
+            <b-col cols="4" md="4" class="mx-3">
+              <b-form-group
+                id="input-group-3"
+                label="Full Name:"
+                label-for="input-3"
+              >
+                <b-form-input
+                  id="input-3"
+                  v-model="form.name"
+                  placeholder="Enter full name"
+                  required
+                ></b-form-input>
+              </b-form-group>
+            </b-col>
+            <b-col cols="4" md="4"
+              ><b-form-group
+                id="input-group-2"
+                label="Date of Birth:"
+                label-for="input-2"
+              >
+                <b-form-datepicker
+                  id="input-2"
+                  v-model="form.dob"
+                  class="mb-2"
+                  placeholder="Choose a date"
+                  locale="en-US"
+                  :date-format-options="{
+                    year: 'numeric',
+                    month: 'numeric',
+                    day: 'numeric',
+                  }"
+                  required
+                ></b-form-datepicker> </b-form-group
+            ></b-col>
+          </b-row>
+          <b-row>
+            <b-col cols="4" md="4" class="mx-3">
+              <b-form-group
+                id="input-group-1"
+                label="Email address:"
+                label-for="input-1"
+                description="We'll never share your email with anyone else."
+              >
+                <b-form-input
+                  id="input-1"
+                  v-model="form.email"
+                  type="email"
+                  placeholder="Enter email"
+                  required
+                ></b-form-input>
+              </b-form-group>
+            </b-col>
+            <b-col cols="4" md="4">
+              <b-form-group
+                id="input-group-4"
+                label="Gender:"
+                label-for="input-4"
+              >
+                <b-form-select
+                  id="input-4"
+                  v-model="form.gender"
+                  :options="genders"
+                  required
+                ></b-form-select>
+              </b-form-group>
+            </b-col>
+          </b-row>
+          <b-row>
+            <b-col cols="8">
+              <b-button type="reset" variant="danger">Reset</b-button>
+              <b-button type="submit" variant="primary" class="float-right"
+                >Submit</b-button
+              >
+            </b-col>
+          </b-row>
+        </b-form>
+      </div>
+      <div class="title-heading">List Data</div>
+      <div class="underline"></div>
       <!-- User Interface controls -->
       <b-row>
         <b-col lg="6" class="my-1">
@@ -170,13 +265,18 @@
 
         <template #cell(actions)="row">
           <b-button
+            title="Edit data"
             size="sm"
             class="mr-1"
             @click="info(row.item, row.index, $event.target)"
           >
-            Info modal
+            Edit
           </b-button>
-          <b-button size="sm" @click="row.toggleDetails">
+          <b-button
+            :title="(row.detailsShowing ? 'Hide' : 'Show') + ' Details'"
+            size="sm"
+            @click="row.toggleDetails"
+          >
             {{ row.detailsShowing ? 'Hide' : 'Show' }} Details
           </b-button>
         </template>
@@ -196,63 +296,146 @@
       <b-modal
         :id="infoModal.id"
         :title="infoModal.title"
-        ok-only
-        @hide="resetInfoModal"
+        size="xl"
+        @hidden="onEditReset"
       >
-        <pre>{{ infoModal.content }}</pre>
+        <!-- <pre>{{ infoModal.content }}</pre> -->
+        <b-container fluid>
+          <b-row>
+            <b-col cols="6" md="6">
+              <b-form-group
+                id="input-group-3"
+                label="Full Name:"
+                label-for="input-3"
+              >
+                <b-form-input
+                  id="input-3"
+                  v-model="form.name"
+                  placeholder="Enter full name"
+                  required
+                ></b-form-input>
+              </b-form-group>
+            </b-col>
+            <b-col
+              ><b-form-group
+                id="input-group-2"
+                label="Date of Birth:"
+                label-for="input-2"
+              >
+                <b-form-datepicker
+                  id="input-2"
+                  v-model="form.dob"
+                  class="mb-2"
+                  placeholder="Choose a date"
+                  locale="en-US"
+                  :date-format-options="{
+                    year: 'numeric',
+                    month: 'numeric',
+                    day: 'numeric',
+                  }"
+                  required
+                ></b-form-datepicker> </b-form-group
+            ></b-col>
+          </b-row>
+          <b-row>
+            <b-col cols="6" md="6">
+              <b-form-group
+                id="input-group-1"
+                label="Email address:"
+                label-for="input-1"
+                description="We'll never share your email with anyone else."
+              >
+                <b-form-input
+                  id="input-1"
+                  v-model="form.email"
+                  type="email"
+                  placeholder="Enter email"
+                  required
+                ></b-form-input>
+              </b-form-group>
+            </b-col>
+            <b-col>
+              <b-form-group
+                id="input-group-4"
+                label="Gender:"
+                label-for="input-4"
+              >
+                <b-form-select
+                  id="input-4"
+                  v-model="form.gender"
+                  :options="genders"
+                  required
+                ></b-form-select>
+              </b-form-group>
+            </b-col>
+          </b-row>
+        </b-container>
+
+        <template #modal-footer>
+          <div class="w-100">
+            <b-button
+              variant="outline-primary"
+              size="sm"
+              class="float-right"
+              @click="onEditSubmit(event, item.id)"
+            >
+              Submit
+            </b-button>
+            <b-button
+              variant="outline-danger"
+              size="sm"
+              class="float-left"
+              @click="show = false"
+            >
+              Reset
+            </b-button>
+          </div>
+        </template>
       </b-modal>
     </b-container>
   </div>
 </template>
 <script>
+import AlertNotification from '@/components/AlertNotification.vue'
 export default {
+  components: {
+    AlertNotification,
+  },
   props: {},
+  async asyncData({ $axios }) {
+    const result = await $axios.get('/doers')
+    // console.log('data axios', result.data)
+    const items = result.data
+    return { items }
+  },
   data() {
     return {
-      name: 'BootstrapVue',
-      show: true,
-      items: [
-        {
-          isActive: true,
-          age: 40,
-          name: { first: 'Dickerson', last: 'Macdonald' },
-        },
-        { isActive: false, age: 21, name: { first: 'Larsen', last: 'Shaw' } },
-        {
-          isActive: false,
-          age: 9,
-          name: { first: 'Mini', last: 'Navarro' },
-          _rowVariant: 'success',
-        },
-        { isActive: false, age: 89, name: { first: 'Geneva', last: 'Wilson' } },
-        { isActive: true, age: 38, name: { first: 'Jami', last: 'Carney' } },
-        { isActive: false, age: 27, name: { first: 'Essie', last: 'Dunlap' } },
-        { isActive: true, age: 40, name: { first: 'Thor', last: 'Macdonald' } },
-        {
-          isActive: true,
-          age: 87,
-          name: { first: 'Larsen', last: 'Shaw' },
-          _cellVariants: { age: 'danger', isActive: 'warning' },
-        },
-        { isActive: false, age: 26, name: { first: 'Mitzi', last: 'Navarro' } },
-        {
-          isActive: false,
-          age: 22,
-          name: { first: 'Genevieve', last: 'Wilson' },
-        },
-        { isActive: true, age: 38, name: { first: 'John', last: 'Carney' } },
-        { isActive: false, age: 29, name: { first: 'Dick', last: 'Dunlap' } },
-      ],
+      name: 'IndexPage',
+      show: false,
+      notif: {
+        show: true,
+        color: 'info',
+      },
+      form: {
+        email: '',
+        name: '',
+        dob: null,
+        age: 0,
+        gender: null,
+        isActive: true,
+      },
+      genders: [{ text: 'Select One', value: null }, 'Male', 'Female'],
+      showCreate: true,
       fields: [
         {
           key: 'name',
-          label: 'Person full name',
+          label: 'Full Name',
           sortable: true,
           sortDirection: 'desc',
         },
         {
           key: 'age',
-          label: 'Person age',
+          label: 'Age',
           sortable: true,
           class: 'text-center',
         },
@@ -302,11 +485,29 @@ export default {
   mounted() {
     // Set the initial number of items
     this.totalRows = this.items.length
+    console.log('DATA', this.items)
   },
   methods: {
+    getAge(dateString) {
+      const today = new Date()
+      const birthDate = new Date(dateString)
+      let age = today.getFullYear() - birthDate.getFullYear()
+      const m = today.getMonth() - birthDate.getMonth()
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--
+      }
+      return age
+    },
     info(item, index, button) {
-      this.infoModal.title = `Row index: ${index}`
+      // this.infoModal.title = `Row index: ${index}`
+      this.infoModal.title = `Edit data`
       this.infoModal.content = JSON.stringify(item, null, 2)
+
+      this.form = {
+        ...item,
+        name: item.name.first + ' ' + item.name.last,
+      }
+      console.log('MODAL', this.form, item)
       this.$root.$emit('bv::show::modal', this.infoModal.id, button)
     },
     resetInfoModal() {
@@ -324,6 +525,89 @@ export default {
     },
     dismissed() {
       // console.log('Alert dismissed')
+    },
+    async onSubmit(event) {
+      console.log('ON SUBMIT')
+      event.preventDefault()
+      const age = this.getAge(this.form.dob)
+      this.form.age = age
+      const firstName = this.form.name.split(' ')[0]
+      const lastName = this.form.name.split(' ').pop()
+      const req = {
+        email: this.form.email,
+        name: { first: firstName, last: lastName },
+        age: this.form.age,
+        gender: this.form.gender,
+        dob: this.form.dob,
+        isActive: true,
+      }
+      // alert(JSON.stringify(req))
+      this.show = false
+      const res = await this.$axios.post('/doers', req)
+      if (res.data) {
+        this.notif.color = 'info'
+        this.items.push(res.data)
+      } else {
+        this.notif.color = 'danger'
+      }
+      this.show = true
+      // console.log('response result', res, res.data)
+    },
+    onReset(event) {
+      console.log('ON RESET')
+      event.preventDefault()
+      // Reset our form values
+      this.form.email = ''
+      this.form.name = ''
+      this.form.dob = ''
+      this.form.gender = null
+      // Trick to reset/clear native browser form validation state
+      this.show = false
+      this.$nextTick(() => {
+        this.show = true
+      })
+    },
+    async onEditSubmit(event) {
+      console.log('ON EDIT SUBMIT')
+      event.preventDefault()
+      const age = this.getAge(this.form.dob)
+      this.form.age = age
+      const firstName = this.form.name.split(' ')[0]
+      const lastName = this.form.name.split(' ').pop()
+      const req = {
+        email: this.form.email,
+        name: { first: firstName, last: lastName },
+        age: this.form.age,
+        gender: this.form.gender,
+        dob: this.form.dob,
+        isActive: true,
+      }
+      // alert(JSON.stringify(req))
+      this.show = false
+      const res = await this.$axios.patch(`/doers/${this.form.id}`, req)
+      if (res.data) {
+        this.notif.color = 'info'
+        this.items.push(res.data)
+      } else {
+        this.notif.color = 'danger'
+      }
+      this.show = true
+      // console.log('response result', res, res.data)
+    },
+    onEditReset(event) {
+      console.log('ON EDIT RESET')
+      event.preventDefault()
+      // Reset our form values
+      this.form.email = ''
+      this.form.name = ''
+      this.form.dob = ''
+      this.form.gender = null
+      // Trick to reset/clear native browser form validation state
+      this.show = false
+      this.$nextTick(() => {})
+      // this.$nextTick(() => {
+      //   this.show = true
+      // })
     },
   },
 }
