@@ -618,7 +618,7 @@ export default {
         age: this.form.age,
         gender: this.form.gender,
         dob: this.form.dob,
-        isActive: true,
+        isActive: this.form.isActive,
       }
       console.log('UPDATE', req)
       this.$root.$emit('bv::hide::modal', this.infoModal.id)
