@@ -245,6 +245,7 @@
 
       <!-- Main table element -->
       <b-table
+        id="data-table"
         :items="items"
         :fields="fields"
         :current-page="currentPage"
@@ -266,18 +267,30 @@
         <template #cell(actions)="row">
           <b-button
             title="Edit data"
+            variant="outline-warning"
             size="sm"
             class="mr-1"
-            @click="info(row.item, row.index, $event.target)"
+            @click="edit(row.item, row.index, $event.target)"
           >
             Edit
           </b-button>
+
           <b-button
             :title="(row.detailsShowing ? 'Hide' : 'Show') + ' Details'"
+            variant="outline-info"
             size="sm"
             @click="row.toggleDetails"
           >
             {{ row.detailsShowing ? 'Hide' : 'Show' }} Details
+          </b-button>
+
+          <b-button
+            title="Delete data"
+            variant="outline-danger"
+            size="sm"
+            @click="onDelete($event, row.item.id)"
+          >
+            Delete
           </b-button>
         </template>
 
@@ -368,6 +381,22 @@
                 ></b-form-select>
               </b-form-group>
             </b-col>
+            <b-col>
+              <b-form-group
+                id="input-group-6"
+                label="Active:"
+                label-for="input-6"
+              >
+                <b-form-select
+                  id="input-6"
+                  v-model="form.isActive"
+                  :options="status"
+                  value-field="value"
+                  text-field="text"
+                  required
+                ></b-form-select>
+              </b-form-group>
+            </b-col>
           </b-row>
         </b-container>
 
@@ -377,7 +406,7 @@
               variant="outline-primary"
               size="sm"
               class="float-right"
-              @click="onEditSubmit(event, item.id)"
+              @click="onEditSubmit($event, infoModal.index)"
             >
               Submit
             </b-button>
@@ -385,7 +414,7 @@
               variant="outline-danger"
               size="sm"
               class="float-left"
-              @click="show = false"
+              @click="onEditReset($event)"
             >
               Reset
             </b-button>
@@ -415,6 +444,7 @@ export default {
       notif: {
         show: true,
         color: 'info',
+        mode: '',
       },
       form: {
         email: '',
@@ -425,6 +455,10 @@ export default {
         isActive: true,
       },
       genders: [{ text: 'Select One', value: null }, 'Male', 'Female'],
+      status: [
+        { value: true, text: 'Yes' },
+        { value: false, text: 'No' },
+      ],
       showCreate: true,
       fields: [
         {
@@ -464,6 +498,7 @@ export default {
         id: 'info-modal',
         title: '',
         content: '',
+        index: '',
       },
     }
   },
@@ -498,8 +533,9 @@ export default {
       }
       return age
     },
-    info(item, index, button) {
+    edit(item, index, button) {
       // this.infoModal.title = `Row index: ${index}`
+      this.infoModal.index = item.id
       this.infoModal.title = `Edit data`
       this.infoModal.content = JSON.stringify(item, null, 2)
 
@@ -507,8 +543,8 @@ export default {
         ...item,
         name: item.name.first + ' ' + item.name.last,
       }
-      console.log('MODAL', this.form, item)
       this.$root.$emit('bv::show::modal', this.infoModal.id, button)
+      console.log('MODAL', this.form, item)
     },
     resetInfoModal() {
       this.infoModal.title = ''
@@ -545,10 +581,12 @@ export default {
       this.show = false
       const res = await this.$axios.post('/doers', req)
       if (res.data) {
-        this.notif.color = 'info'
+        this.notif.color = 'success'
+        this.notif.mode = 'created'
         this.items.push(res.data)
       } else {
         this.notif.color = 'danger'
+        this.notif.mode = 'created'
       }
       this.show = true
       // console.log('response result', res, res.data)
@@ -567,8 +605,8 @@ export default {
         this.show = true
       })
     },
-    async onEditSubmit(event) {
-      console.log('ON EDIT SUBMIT')
+    async onEditSubmit(event, id) {
+      console.log('ON EDIT SUBMIT', id)
       event.preventDefault()
       const age = this.getAge(this.form.dob)
       this.form.age = age
@@ -582,13 +620,27 @@ export default {
         dob: this.form.dob,
         isActive: true,
       }
+      console.log('UPDATE', req)
+      this.$root.$emit('bv::hide::modal', this.infoModal.id)
+
       // alert(JSON.stringify(req))
       this.show = false
-      const res = await this.$axios.patch(`/doers/${this.form.id}`, req)
+      const res = await this.$axios.put(`/doers/${this.form.id}`, req)
       if (res.data) {
-        this.notif.color = 'info'
-        this.items.push(res.data)
+        this.notif.color = 'success'
+        this.notif.mode = 'updated'
+        const itemIndex = this.items.findIndex((obj) => obj.id === res.data.id)
+        if (itemIndex > -1) {
+          this.items[itemIndex] = res.data
+          console.log('itemIndex', itemIndex, this.items[itemIndex])
+          this.$root.$emit('bv::refresh::table', 'data-table')
+        } else {
+          this.notif.mode = 'updated'
+          this.notif.color = 'danger'
+        }
+        // this.items.push(res.data)
       } else {
+        this.notif.mode = 'updated'
         this.notif.color = 'danger'
       }
       this.show = true
@@ -602,12 +654,35 @@ export default {
       this.form.name = ''
       this.form.dob = ''
       this.form.gender = null
+      this.form.isActive = true
       // Trick to reset/clear native browser form validation state
       this.show = false
       this.$nextTick(() => {})
       // this.$nextTick(() => {
       //   this.show = true
       // })
+    },
+    async onDelete(event, id) {
+      event.preventDefault()
+      console.log(id)
+      const res = await this.$axios.delete(`/doers/${id}`)
+      console.log('RES DEL', res)
+      if (res.statusText === 'OK') {
+        this.notif.color = 'success'
+        this.notif.mode = 'deleted'
+        const itemIndex = this.items.findIndex((obj) => obj.id === id)
+        if (itemIndex > -1) {
+          this.items.splice(itemIndex, 1)
+          console.log('itemIndex', itemIndex, this.items[itemIndex])
+          this.$root.$emit('bv::refresh::table', 'data-table')
+        } else {
+          this.notif.mode = 'deleted'
+          this.notif.color = 'danger'
+        }
+      } else {
+        this.notif.mode = 'deleted'
+        this.notif.color = 'danger'
+      }
     },
   },
 }

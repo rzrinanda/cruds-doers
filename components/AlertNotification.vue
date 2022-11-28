@@ -9,8 +9,8 @@
     >
       {{
         notif.color != 'danger'
-          ? 'Congrats! Data successfully created.'
-          : 'Sorry! Data creation failed.'
+          ? `Congrats! Data successfully ${notif.mode}.`
+          : `Sorry! Data failed to ${notif.mode}.`
       }}
     </b-alert>
   </div>
