@@ -589,6 +589,8 @@ export default {
         this.notif.mode = 'created'
       }
       this.show = true
+      this.totalRows = this.items.length
+
       // console.log('response result', res, res.data)
     },
     onReset(event) {
@@ -667,6 +669,8 @@ export default {
       console.log(id)
       const res = await this.$axios.delete(`/doers/${id}`)
       console.log('RES DEL', res)
+      this.show = false
+
       if (res.statusText === 'OK') {
         this.notif.color = 'success'
         this.notif.mode = 'deleted'
@@ -683,6 +687,8 @@ export default {
         this.notif.mode = 'deleted'
         this.notif.color = 'danger'
       }
+      this.show = true
+      this.totalRows = this.items.length
     },
   },
 }
