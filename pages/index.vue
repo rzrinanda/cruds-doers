@@ -94,11 +94,26 @@
             </b-col>
           </b-row>
           <b-row>
-            <b-col cols="8">
+            <b-col cols="7">
               <b-button type="reset" variant="danger">Reset</b-button>
-              <b-button type="submit" variant="primary" class="float-right"
-                >Submit</b-button
+            </b-col>
+            <b-col>
+              <b-overlay
+                :show="submitLoad"
+                rounded
+                opacity="0.6"
+                spinner-small
+                spinner-variant="primary"
+                class="d-inline-block"
               >
+                <b-button
+                  ref="btnCreateSubmit"
+                  type="submit"
+                  variant="primary"
+                  class="float-right"
+                  >Submit</b-button
+                >
+              </b-overlay>
             </b-col>
           </b-row>
         </b-form>
@@ -283,7 +298,6 @@
           >
             {{ row.detailsShowing ? 'Hide' : 'Show' }} Details
           </b-button>
-
           <b-button
             title="Delete data"
             variant="outline-danger"
@@ -310,6 +324,7 @@
         :id="infoModal.id"
         :title="infoModal.title"
         size="xl"
+        body-class="position-static"
         @hidden="onEditReset"
       >
         <!-- <pre>{{ infoModal.content }}</pre> -->
@@ -403,10 +418,11 @@
         <template #modal-footer>
           <div class="w-100">
             <b-button
+              ref="btnEditSubmit"
               variant="outline-primary"
               size="sm"
               class="float-right"
-              @click="onEditSubmit($event, infoModal.index)"
+              @click="onEditSubmit()"
             >
               Submit
             </b-button>
@@ -420,6 +436,56 @@
             </b-button>
           </div>
         </template>
+        <b-overlay
+          :show="editProcess"
+          no-wrap
+          rounded="true"
+          @shown="onConfirm"
+          @hidden="onHidden"
+        >
+          <template #overlay>
+            <div
+              v-if="editProcessing"
+              class="text-center p-4 bg-transparent text-dark rounded flex"
+            >
+              <!-- <b-icon icon="cloud-upload" font-scale="4"></b-icon> -->
+              <div class="mb-3">Processing...</div>
+              <!-- <b-progress
+                min="1"
+                max="20"
+                :value="waiting"
+                variant="success"
+                height="3px"
+                class="mx-n4 rounded-0"
+              ></b-progress> -->
+            </div>
+            <div
+              v-else
+              ref="confirmDialog"
+              tabindex="-1"
+              role="dialog"
+              aria-modal="false"
+              aria-labelledby="form-confirm-label"
+              class="text-center p-3"
+            >
+              <p><strong id="form-confirm-label">Are you sure?</strong></p>
+              <div class="d-flex">
+                <b-button
+                  variant="outline-danger"
+                  class="mr-3"
+                  @click="onCancel"
+                >
+                  Cancel
+                </b-button>
+                <b-button
+                  variant="outline-success"
+                  @click="onOK($event, infoModal.index)"
+                  >OK</b-button
+                >
+              </div>
+            </div>
+          </template>
+        </b-overlay>
       </b-modal>
     </b-container>
   </div>
@@ -446,6 +512,12 @@ export default {
         color: 'info',
         mode: '',
       },
+      submitLoad: false,
+      // deleteLoad: false,
+      editProcess: false,
+      editProcessing: false,
+      waiting: 1,
+      interval: null,
       form: {
         email: '',
         name: '',
@@ -569,6 +641,7 @@ export default {
       this.form.age = age
       const firstName = this.form.name.split(' ')[0]
       const lastName = this.form.name.split(' ').pop()
+      this.submitLoad = true
       const req = {
         email: this.form.email,
         name: { first: firstName, last: lastName },
@@ -583,14 +656,15 @@ export default {
       if (res.data) {
         this.notif.color = 'success'
         this.notif.mode = 'created'
-        this.items.push(res.data)
+        this.items.unshift(res.data)
       } else {
         this.notif.color = 'danger'
         this.notif.mode = 'created'
       }
+      this.submitLoad = false
       this.show = true
       this.totalRows = this.items.length
-
+      this.onReset(event)
       // console.log('response result', res, res.data)
     },
     onReset(event) {
@@ -607,7 +681,35 @@ export default {
         this.show = true
       })
     },
-    async onEditSubmit(event, id) {
+    onEditSubmit() {
+      this.editProcessing = false
+      this.editProcess = true
+    },
+    clearInterval() {
+      if (this.interval) {
+        clearInterval(this.interval)
+        this.interval = null
+      }
+    },
+    onCancel() {
+      this.editProcess = false
+    },
+    onOK(event, id) {
+      this.editProcessing = true
+      this.clearInterval()
+      this.interval = setInterval(() => {
+        if (this.waiting < 20) {
+          this.waiting = this.waiting + 1
+        } else {
+          this.clearInterval()
+          this.$nextTick(() => {
+            this.onEditSave(event, id)
+            // this.editProcess = this.editProcessing = false
+          })
+        }
+      }, 350)
+    },
+    async onEditSave(event, id) {
       console.log('ON EDIT SUBMIT', id)
       event.preventDefault()
       const age = this.getAge(this.form.dob)
@@ -646,6 +748,7 @@ export default {
         this.notif.color = 'danger'
       }
       this.show = true
+      this.editProcess = this.editProcessing = false
       // console.log('response result', res, res.data)
     },
     onEditReset(event) {
@@ -666,6 +769,8 @@ export default {
     },
     async onDelete(event, id) {
       event.preventDefault()
+      this.deleteLoad = false
+      this.deleteLoad = true
       console.log(id)
       const res = await this.$axios.delete(`/doers/${id}`)
       console.log('RES DEL', res)
@@ -683,12 +788,22 @@ export default {
           this.notif.mode = 'deleted'
           this.notif.color = 'danger'
         }
+        this.deleteLoad = false
       } else {
         this.notif.mode = 'deleted'
         this.notif.color = 'danger'
       }
       this.show = true
       this.totalRows = this.items.length
+    },
+    onConfirm() {
+      // Focus the dialog prompt
+      this.$refs.confirmDialog.focus()
+    },
+    onHidden() {
+      // In this case, we return focus to the submit button
+      // You may need to alter this based on your application requirements
+      this.$refs.btnEditSubmit.focus()
     },
   },
 }

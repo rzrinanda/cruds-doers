@@ -1,15 +1,15 @@
 <template>
   <div>
-    <TableOptions />
+    <TableControls />
     <DataTables />
   </div>
 </template>
 
 <script>
 import DataTables from './DataTables.vue'
-import TableOptions from './TableOptions.vue'
+import TableControls from './TableControls.vue'
 export default {
-  components: { DataTables, TableOptions },
+  components: { DataTables, TableControls },
 }
 </script>
 
