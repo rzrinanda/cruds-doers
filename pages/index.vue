@@ -302,7 +302,7 @@
             title="Delete data"
             variant="outline-danger"
             size="sm"
-            @click="onDelete($event, row.item.id)"
+            @click="onDeleteSubmit($event, row.item.id)"
           >
             Delete
           </b-button>
@@ -318,7 +318,6 @@
           </b-card>
         </template>
       </b-table>
-
       <!-- Info modal -->
       <b-modal
         :id="infoModal.id"
@@ -516,6 +515,8 @@ export default {
       // deleteLoad: false,
       editProcess: false,
       editProcessing: false,
+      deleteProcess: false,
+      deleteProcessing: false,
       waiting: 1,
       interval: null,
       form: {
@@ -685,6 +686,27 @@ export default {
       this.editProcessing = false
       this.editProcess = true
     },
+    onDeleteSubmit(event, id) {
+      this.$bvModal
+        .msgBoxConfirm('Please confirm that you want to delete the data.', {
+          title: 'Please Confirm',
+          size: 'sm',
+          buttonSize: 'sm',
+          okVariant: 'danger',
+          okTitle: 'YES',
+          cancelTitle: 'NO',
+          footerClass: 'p-2',
+          hideHeaderClose: false,
+          centered: true,
+        })
+        .then((value) => {
+          // alert(value)
+          if (value) this.onDelete(event, id)
+        })
+        .catch((err) => {
+          alert(`Error: ${err}\nData could not be deleted.`)
+        })
+    },
     clearInterval() {
       if (this.interval) {
         clearInterval(this.interval)
@@ -801,8 +823,6 @@ export default {
       this.$refs.confirmDialog.focus()
     },
     onHidden() {
-      // In this case, we return focus to the submit button
-      // You may need to alter this based on your application requirements
       this.$refs.btnEditSubmit.focus()
     },
   },
