@@ -2,9 +2,10 @@ const { Server } = require('@hapi/hapi')
 // const Hapi = require('@hapi/hapi')
 const nuxtPlugin = require('@nuxtjs/hapi')
 const Routes = require('./api')
+require('dotenv').config()
 
 async function start() {
-  const port = process.env.APP_PORT || 3000
+  const port = process.env.APP_PORT ?? 3000
   const server = new Server({ port })
 
   await server.register({
